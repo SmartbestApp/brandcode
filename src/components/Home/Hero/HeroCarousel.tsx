@@ -35,7 +35,7 @@ const slides: Array<
     cta: { label: "Shop Now", href: "#" },
   },
    {
-    img: "/images/hero/hero-02@2x.jpg",
+    img: "/images/hero/ero-02@2x.jpg",
     mobileImg: "/images/hero/hero-01-mobile@2x.webp",
     heading: "Master the Sound",
     sub: "True Wireless Noise Cancelling",
