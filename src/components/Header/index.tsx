@@ -1,35 +1,84 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import CustomSelect from "./CustomSelect";
-import { menuData } from "./menuData";
-import Dropdown from "./Dropdown";
+import Image from "next/image";
 import { useAppSelector } from "@/redux/store";
 import { useSelector } from "react-redux";
 import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
-import Image from "next/image";
-import { SiYoutube, SiFacebook, SiInstagram, SiTiktok, SiSnapchat } from "react-icons/si";
+import { menuData } from "./menuData";
+import Dropdown from "./Dropdown";
 import GlossyIcon from "./GlossyIcon";
+import { SiYoutube, SiFacebook, SiInstagram, SiTiktok, SiSnapchat } from "react-icons/si";
 
+/* ========= Flowing gradient text ========= */
+const FlowText: React.FC<{
+  children: React.ReactNode;
+  variant?: "gold" | "vibgyor";
+  speedMs?: number;
+  className?: string;
+}> = ({ children, variant = "gold", speedMs = 1800, className = "" }) => {
+  const gradient =
+    variant === "gold"
+      ? "linear-gradient(90deg,#8a6a2b 0%,#d6a84b 20%,#ffd36a 40%,#fff1b0 50%,#ffd36a 60%,#d6a84b 80%,#8a6a2b 100%)"
+      : "linear-gradient(90deg,#ff0000 0%,#ff7f00 16%,#ffff00 33%,#00ff00 50%,#0000ff 66%,#4b0082 83%,#8b00ff 100%)";
+
+  return (
+    <span
+      className={`relative inline-block font-medium ${className}`}
+      style={{
+        backgroundImage: gradient,
+        backgroundSize: "200% 100%",
+        backgroundPosition: "0% 50%",
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        color: "transparent",
+        animation: `flow-x ${speedMs}ms linear infinite`,
+        textShadow:
+          variant === "gold" ? "0 0 6px rgba(255, 211, 106, .25)" : "0 0 6px rgba(139, 0, 255, .25)",
+      }}
+    >
+      {children}
+      <style jsx>{`
+        @keyframes flow-x {
+          0% {
+            background-position: 0% 50%;
+          }
+          100% {
+            background-position: 200% 50%;
+          }
+        }
+      `}</style>
+    </span>
+  );
+};
+/* ======================================== */
 
 const Header = () => {
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
+  const [scrollPct, setScrollPct] = useState(0); // —— premium scroll progress
   const { openCartModal } = useCartModalContext();
-  
+
   const product = useAppSelector((state) => state.cartReducer.items);
   const totalPrice = useSelector(selectTotalPrice);
 
-  const handleOpenCartModal = () => openCartModal();
-
-  // Sticky menu
-  const handleStickyMenu = () => setStickyMenu(window.scrollY >= 80);
+  // Sticky + scroll progress
   useEffect(() => {
-    window.addEventListener("scroll", handleStickyMenu);
-  });
+    const onScroll = () => {
+      setStickyMenu(window.scrollY >= 80);
+      const doc = document.documentElement;
+      const h = doc.scrollHeight - doc.clientHeight;
+      const pct = h > 0 ? Math.min(100, Math.max(0, (window.scrollY / h) * 100)) : 0;
+      setScrollPct(pct);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // categories dropdown
   const [catOpen, setCatOpen] = useState(false);
   const options = [
     { label: "All Categories", value: "0" },
@@ -42,16 +91,53 @@ const Header = () => {
     { label: "Tablet", value: "7" },
   ];
   const [selectedCat, setSelectedCat] = useState(options[0]);
-  const catRef = React.useRef<HTMLDivElement | null>(null);
-useEffect(() => {
-  const onDown = (e: MouseEvent) => {
-    if (catRef.current && !catRef.current.contains(e.target as Node)) {
-      setCatOpen(false);
-    }
+  const catRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  // Simple, fast local search suggestions (keyboard-friendly)
+  const searchWrapRef = useRef<HTMLDivElement | null>(null);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const suggestionsData = useMemo(
+    () => [
+      "MacBook Pro M-series",
+      "Gaming Laptop RTX",
+      "4K IPS Monitor",
+      "iPhone 15 Cases",
+      "Noise Cancelling Headphones",
+      "Mechanical Keyboard",
+      "Smart Watch",
+      "USB-C Hub",
+      "Wireless Mouse",
+      "Android Tablets",
+    ],
+    []
+  );
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return suggestionsData.filter((s) => s.toLowerCase().includes(q)).slice(0, 6);
+  }, [searchQuery, suggestionsData]);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) {
+        setShowSuggest(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") setShowSuggest(false);
   };
-  document.addEventListener("mousedown", onDown);
-  return () => document.removeEventListener("mousedown", onDown);
-}, []);
+
   const BG = {
     youtube: "linear-gradient(180deg,#ff3b3b 0%,#c40000 100%)",
     facebook: "linear-gradient(180deg,#1b86ff 0%,#0a52cc 100%)",
@@ -60,7 +146,6 @@ useEffect(() => {
     instagram:
       "conic-gradient(from 200deg at 50% 50%, #feda75 0deg, #fa7e1e 90deg, #d62976 180deg, #962fbf 270deg, #4f5bd5 360deg)",
   };
-
   const GLOW = {
     youtube: "radial-gradient(40% 40% at 50% 50%, #ff3b3b55, transparent 70%)",
     facebook: "radial-gradient(40% 40% at 50% 50%, #1b86ff55, transparent 70%)",
@@ -73,111 +158,128 @@ useEffect(() => {
 
   return (
     <header
-      className={`fixed left-0 top-0 w-full z-9999 bg-black transition-all ease-in-out duration-300 ${
-        stickyMenu && "shadow"
+      className={`fixed left-0 top-0 w-full z-[1000] transition-all duration-300 ${
+        stickyMenu ? "bg-black/60 backdrop-blur-md border-b border-white/10" : "bg-black"
       }`}
     >
-      <div className="max-w-[1280px]  mx-auto px-3 sm:px-7.5 xl:px-0">
-        {/* header top */}
+      <div className="max-w-[1270px] mx-auto px-3 sm:px-7.5 xl:px-0">
+        {/* ===== TOP ROW ===== */}
         <div
           className={`flex flex-col lg:flex-row gap-5 items-end lg:items-center xl:justify-between ease-out duration-200 ${
             stickyMenu ? "py-3.5" : "py-3"
           } relative`}
         >
-          {/* left */}
+          {/* left (logo + search) */}
           <div className="xl:w-auto flex-col sm:flex-row w-full flex sm:justify-between sm:items-center gap-5 sm:gap-10">
             <Link className="flex-shrink-0" href="/">
               <Image src="/images/logo/logo.svg" alt="Logo" width={219} height={36} />
             </Link>
-{/* Two-pill search (shorter height; wider search) */}
-<div className="w-full ">
-  <form onSubmit={(e) => e.preventDefault()}>
-    <div className="flex items-center gap-1">
-      {/* Categories pill */}
-      <div ref={catRef} className="relative shrink-0">
-        <button
-          type="button"
-          onClick={() => setCatOpen((v) => !v)}
-          className="h-8 rounded-full bg-gray-1 border border-gray-3 px-4 pl-5 pr-4 flex items-center gap-3 text-dark"
-        >
-          {/* list icon */}
-          <svg width="18" height="18" viewBox="0 0 24 24" className="opacity-80">
-            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span className="font-medium">{selectedCat.label}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" className="ml-1 opacity-70">
-            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
 
-        {/* Dropdown menu */}
-        <ul
-          className={`absolute left-0 mt-2 min-w-[220px] rounded-md border border-gray-3 bg-white shadow-md z-[9999] ${
-            catOpen ? "block" : "hidden"
-          }`}
-          role="listbox"
-          aria-label="Categories"
-        >
-          {options.map((opt) => (
-            <li key={opt.value}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCat(opt);
-                  setCatOpen(false);
-                }}
-                className={`w-full text-left px-3.5 py-2.5 text-sm hover:bg-gray-1 ${
-                  selectedCat.value === opt.value ? "text-blue font-medium" : "text-dark"
-                }`}
-                role="option"
-                aria-selected={selectedCat.value === opt.value}
-              >
-                {opt.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+            {/* Two-pill search + suggestions */}
+            <div className="w-full" ref={searchWrapRef}>
+              <form onSubmit={(e) => e.preventDefault()}>
+                <div className="flex items-center gap-1">
+                  {/* Categories pill */}
+                  <div ref={catRef} className="relative shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setCatOpen((v) => !v)}
+                      className="h-8 rounded-full bg-gray-1 border border-gray-3 px-4 pl-5 pr-4 flex items-center gap-3 text-dark"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" className="opacity-80">
+                        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                      <span className="font-medium">{selectedCat.label}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" className="ml-1 opacity-70">
+                        <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </button>
 
-      {/* Search pill (shorter & wider) */}
-      <div className="relative flex-1 min-w-[250px] sm:min-w-[350px]">
-        <input
-          onChange={(e) => setSearchQuery(e.target.value)}
-          value={searchQuery}
-          type="search"
-          name="search"
-          id="search"
-          placeholder="Find the Product..."
-          autoComplete="off"
-          className="h-8 w-full rounded-full bg-gray-1 border border-gray-3 pl-4 pr-10 text-dark outline-none placeholder:text-dark-4"
-        />
-        <button
-          aria-label="Search"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-dark/80 hover:text-blue transition"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" className="fill-current">
-            <path d="M17.2687 15.6656L12.6281 11.8969C14.5406 9.28123 14.3437 5.5406 11.9531 3.1781C10.6875 1.91248 8.99995 1.20935 7.19995 1.20935C5.39995 1.20935 3.71245 1.91248 2.44683 3.1781C-0.168799 5.79373 -0.168799 10.0687 2.44683 12.6844C3.71245 13.95 5.39995 14.6531 7.19995 14.6531C8.91558 14.6531 10.5187 14.0062 11.7843 12.8531L16.4812 16.65C16.5937 16.7344 16.7343 16.7906 16.875 16.7906C17.0718 16.7906 17.2406 16.7062 17.3531 16.5656C17.5781 16.2844 17.55 15.8906 17.2687 15.6656ZM7.19995 13.3875C5.73745 13.3875 4.38745 12.825 3.34683 11.7844C1.20933 9.64685 1.20933 6.18748 3.34683 4.0781C4.38745 3.03748 5.73745 2.47498 7.19995 2.47498C8.66245 2.47498 10.0125 3.03748 11.0531 4.0781C13.1906 6.2156 13.1906 9.67498 11.0531 11.7844C10.0406 12.825 8.66245 13.3875 7.19995 13.3875Z" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </form>
-</div>
+                    {/* Category dropdown */}
+                    <ul
+                      className={`absolute left-0 mt-2 min-w-[220px] rounded-md border border-gray-3 bg-white shadow-md z-[9999] ${
+                        catOpen ? "block" : "hidden"
+                      }`}
+                      role="listbox"
+                      aria-label="Categories"
+                    >
+                      {options.map((opt) => (
+                        <li key={opt.value}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCat(opt);
+                              setCatOpen(false);
+                            }}
+                            className={`w-full text-left px-3.5 py-2.5 text-sm hover:bg-gray-1 ${
+                              selectedCat.value === opt.value ? "text-blue font-medium" : "text-dark"
+                            }`}
+                            role="option"
+                            aria-selected={selectedCat.value === opt.value}
+                          >
+                            {opt.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
+                  {/* Search pill + popover */}
+                  <div className="relative flex-1 min-w-[250px] sm:min-w-[350px]">
+                    <input
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowSuggest(true);
+                      }}
+                      onFocus={() => setShowSuggest(true)}
+                      onKeyDown={onSearchKey}
+                      value={searchQuery}
+                      type="search"
+                      name="search"
+                      id="search"
+                      placeholder="Find the Product…"
+                      autoComplete="off"
+                      className="h-8 w-full rounded-full bg-gray-1 border border-gray-3 pl-4 pr-10 text-dark outline-none placeholder:text-dark-4"
+                    />
+                    <button
+                      aria-label="Search"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-dark/80 hover:text-blue transition"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 18 18" className="fill-current">
+                        <path d="M17.2687 15.6656L12.6281 11.8969C14.5406 9.28123 14.3437 5.5406 11.9531 3.1781C10.6875 1.91248 8.99995 1.20935 7.19995 1.20935C5.39995 1.20935 3.71245 1.91248 2.44683 3.1781C-0.168799 5.79373 -0.168799 10.0687 2.44683 12.6844C3.71245 13.95 5.39995 14.6531 7.19995 14.6531C8.91558 14.6531 10.5187 14.0062 11.7843 12.8531L16.4812 16.65C16.5937 16.7344 16.7343 16.7906 16.875 16.7906C17.0718 16.7906 17.2406 16.7062 17.3531 16.5656C17.5781 16.2844 17.55 15.8906 17.2687 15.6656ZM7.19995 13.3875C5.73745 13.3875 4.38745 12.825 3.34683 11.7844C1.20933 9.64685 1.20933 6.18748 3.34683 4.0781C4.38745 3.03748 5.73745 2.47498 7.19995 2.47498C8.66245 2.47498 10.0125 3.03748 11.0531 4.0781C13.1906 6.2156 13.1906 9.67498 11.0531 11.7844C10.0406 12.825 8.66245 13.3875 7.19995 13.3875Z" />
+                      </svg>
+                    </button>
+
+                    {/* Suggestions */}
+                    {showSuggest && filtered.length > 0 && (
+                      <div className="absolute left-0 right-0 mt-2 rounded-lg border border-gray-3 bg-white shadow-lg z-[10000] overflow-hidden">
+                        <ul className="py-1">
+                          {filtered.map((item) => (
+                            <li key={item}>
+                              <Link
+                                href={`/search?query=${encodeURIComponent(item)}`}
+                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-1 text-[14px] text-dark"
+                                onClick={() => setShowSuggest(false)}
+                              >
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue/70" />
+                                {item}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
 
-          {/* right */}
+          {/* right (phone + socials) */}
           <div className="flex w-full lg:w-auto items-center gap-7.5">
-            {/* phone (desktop) */}
+            {/* phone (desktop) — exact SVG kept */}
             <div className="hidden xl:flex items-center gap-3.5">
-              {/* phone svg provided */}
-                <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
@@ -185,22 +287,57 @@ useEffect(() => {
                   fill="#ffffffff"
                 />
                 <path
-                  d="M13.2595 1.88008C13.3257 1.47119 13.7122 1.19381 14.1211 1.26001C14.1464 1.26485 14.2279 1.28007 14.2705 1.28958C14.3559 1.30858 14.4749 1.33784 14.6233 1.38106C14.9201 1.46751 15.3347 1.60991 15.8323 1.83805C16.8286 2.2948 18.1544 3.09381 19.5302 4.46961C20.906 5.84541 21.705 7.17122 22.1617 8.1675C22.3899 8.66511 22.5323 9.07972 22.6187 9.3765C22.6619 9.5249 22.6912 9.64393 22.7102 9.72926C22.7197 9.77193 22.7267 9.80619 22.7315 9.8315L22.7373 9.86269C22.8034 10.2716 22.5286 10.6741 22.1197 10.7403C21.712 10.8063 21.3279 10.5303 21.2601 10.1233C21.258 10.1124 21.2522 10.083 21.2461 10.0553C21.2337 9.99994 21.2124 9.91212 21.1786 9.79597C21.1109 9.56363 20.9934 9.2183 20.7982 8.79262C20.4084 7.94232 19.7074 6.76813 18.4695 5.53027C17.2317 4.2924 16.0575 3.59141 15.2072 3.20158C14.7815 3.00642 14.4362 2.88889 14.2038 2.82122C14.0877 2.78739 13.9417 2.75387 13.8863 2.74154C13.4793 2.67372 13.1935 2.2878 13.2595 1.88008Z"
+                  d="M13.2595 1.88008C13.3257 1.47119 13.7122 1.19381 14.1211 1.26001C16.8286 2.2948 20.906 5.84541 22.1617 8.1675C22.8034 10.2716 22.5286 10.6741 22.1197 10.7403C21.712 10.8063 21.3279 10.5303 21.2601 10.1233C20.9934 9.2183 20.4084 7.94232 18.4695 5.53027C16.0575 3.20158 14.4362 2.88889 14.2038 2.82122C13.4793 2.67372 13.1935 2.2878 13.2595 1.88008Z"
                   fill="#ffffffff"
                 />
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
-                  d="M13.4861 5.32955C13.5999 4.93128 14.015 4.70066 14.4133 4.81445L14.2072 5.53559C14.4133 4.81445 14.4136 4.81455 14.414 4.81465L14.4147 4.81486L14.4162 4.81531L14.4196 4.81628L14.4273 4.81859L14.4471 4.82476C14.4622 4.82958 14.481 4.83586 14.5035 4.84383C14.5484 4.85976 14.6077 4.88243 14.6805 4.91363C14.8262 4.97607 15.0253 5.07249 15.2698 5.2172C15.7593 5.50688 16.4275 5.98806 17.2124 6.77303C17.9974 7.558 18.4786 8.22619 18.7683 8.71565C18.913 8.96016 19.0094 9.15923 19.0718 9.30491C19.103 9.37772 19.1257 9.43708 19.1416 9.48199C19.1496 9.50444 19.1559 9.52327 19.1607 9.53835L19.1669 9.55814L19.1692 9.56589L19.1702 9.56922L19.1706 9.57075L19.1708 9.57148C19.1709 9.57184 19.171 9.57219 18.4499 9.77823L19.171 9.57219C19.2848 9.97047 19.0542 10.3856 18.6559 10.4994C18.261 10.6122 17.8496 10.3864 17.7317 9.99438L17.728 9.9836C17.7227 9.96858 17.7116 9.93899 17.6931 9.89579C17.6561 9.80946 17.589 9.66823 17.4774 9.47963C17.2544 9.10289 16.8517 8.53364 16.1518 7.83369C15.4518 7.13374 14.8826 6.73103 14.5058 6.50806C14.3172 6.39645 14.176 6.32935 14.0897 6.29235C14.0465 6.27383 14.0169 6.2628 14.0019 6.25747L13.9911 6.25377C13.599 6.13589 13.3733 5.72445 13.4861 5.32955Z"
+                  d="M13.4861 5.32955C13.5999 4.93128 14.015 4.70066 14.4133 4.81445L14.2072 5.53559C14.8262 4.97607 16.4275 5.98806 17.2124 6.77303C18.913 8.96016 19.0094 9.15923 19.1416 9.48199C19.2848 9.97047 19.0542 10.3856 18.6559 10.4994C18.261 10.6122 17.8496 10.3864 17.7317 9.99438C17.2544 9.10289 16.8517 8.53364 16.1518 7.83369C15.4518 7.13374 14.8826 6.73103 14.5058 6.50806C14.3172 6.39645 14.176 6.32935 14.0897 6.29235C14.0465 6.27383 14.0169 6.2628 14.0019 6.25747L13.9911 6.25377C13.599 6.13589 13.3733 5.72445 13.4861 5.32955Z"
                   fill="#ffffffff"
                 />
               </svg>
-
               <div>
-                <span className="block text-2xs text-white uppercase">24/7 SUPPORT</span>
+                <FlowText variant="gold" speedMs={1400} className="block text-2xs uppercase">
+                  24/7 SUPPORT
+                </FlowText>
                 <p className="font-medium text-custom-sm text-white">(+971) 526991213</p>
               </div>
             </div>
+
+            {/* social icons */}
+            <nav
+              aria-label="Social media"
+              className={`absolute right-4 top-8 z-[100] xl:static items-center gap-3 sm:gap-4 ${
+                navigationOpen ? "hidden" : "flex"
+              }`}
+            >
+              <Link href="https://youtube.com/yourchannel" target="_blank" aria-label="YouTube" className="transition hover:-translate-y-0.5">
+                <GlossyIcon bg={BG.youtube} glow={GLOW.youtube}>
+                  <SiYoutube size={16} color="#fff" />
+                </GlossyIcon>
+              </Link>
+              <Link href="https://www.facebook.com/share/19tEGdWGWy/?mibextid=wwXIfr" target="_blank" aria-label="Facebook" className="transition hover:-translate-y-0.5">
+                <GlossyIcon bg={BG.facebook} glow={GLOW.facebook}>
+                  <SiFacebook size={16} color="#fff" />
+                </GlossyIcon>
+              </Link>
+              <Link href="https://www.instagram.com/brandcode_germany?igsh=amtqYm9pc295MnNm&utm_source=qr" target="_blank" aria-label="Instagram" className="transition hover:-translate-y-0.5">
+                <GlossyIcon bg={BG.instagram} glow={GLOW.instagram}>
+                  <SiInstagram size={15} color="#fff" />
+                </GlossyIcon>
+              </Link>
+              <Link href="https://www.tiktok.com/@yourhandle" target="_blank" aria-label="TikTok" className="transition hover:-translate-y-0.5">
+                <GlossyIcon bg={BG.tiktok} glow={GLOW.tiktok}>
+                  <SiTiktok size={15} color="#fff" />
+                </GlossyIcon>
+              </Link>
+              <Link href="https://www.tiktok.com/@brandcodegermany?_t=ZS-90AIFsTPV2K&_r=1" target="_blank" aria-label="Snapchat" className="transition hover:-translate-y-0.5">
+                <GlossyIcon bg={BG.snapchat} glow={GLOW.snapchat}>
+                  <SiSnapchat size={16} color="#000" />
+                </GlossyIcon>
+              </Link>
+            </nav>
 
             {/* mobile hamburger */}
             <div className="flex w-full lg:w-auto justify-end items-center">
@@ -217,84 +354,30 @@ useEffect(() => {
                 </span>
               </button>
             </div>
-
-            {/* social icons — HIDE when drawer is open */}
-            <nav
-              aria-label="Social media"
-              className={`absolute right-4 top-8 z-[100] xl:static items-center gap-3 sm:gap-4 ${
-                navigationOpen ? "hidden" : "flex"
-              }`}
-            >
-              <Link href="https://youtube.com/yourchannel" target="_blank" aria-label="YouTube" className="transition hover:-translate-y-0.5">
-                <GlossyIcon bg={BG.youtube} glow={GLOW.youtube}>
-                  <SiYoutube size={16} color="#fff" />
-                </GlossyIcon>
-              </Link>
-              <Link
-                href="https://www.facebook.com/share/19tEGdWGWy/?mibextid=wwXIfr"
-                target="_blank"
-                aria-label="Facebook"
-                className="transition hover:-translate-y-0.5"
-              >
-                <GlossyIcon bg={BG.facebook} glow={GLOW.facebook}>
-                  <SiFacebook size={16} color="#fff" />
-                </GlossyIcon>
-              </Link>
-              <Link
-                href="https://www.instagram.com/brandcode_germany?igsh=amtqYm9pc295MnNm&utm_source=qr"
-                target="_blank"
-                aria-label="Instagram"
-                className="transition hover:-translate-y-0.5"
-              >
-                <GlossyIcon bg={BG.instagram} glow={GLOW.instagram}>
-                  <SiInstagram size={15} color="#fff" />
-                </GlossyIcon>
-              </Link>
-              <Link href="https://www.tiktok.com/@yourhandle" target="_blank" aria-label="TikTok" className="transition hover:-translate-y-0.5">
-                <GlossyIcon bg={BG.tiktok} glow={GLOW.tiktok}>
-                  <SiTiktok size={15} color="#fff" />
-                </GlossyIcon>
-              </Link>
-              <Link
-                href="https://www.tiktok.com/@brandcodegermany?_t=ZS-90AIFsTPV2K&_r=1"
-                target="_blank"
-                aria-label="Snapchat"
-                className="transition hover:-translate-y-0.5"
-              >
-                <GlossyIcon bg={BG.snapchat} glow={GLOW.snapchat}>
-                  <SiSnapchat size={16} color="#000" />
-                </GlossyIcon>
-              </Link>
-            </nav>
           </div>
         </div>
-        {/* /header top */}
       </div>
 
-      {/* bottom bar (nav + mobile drawer root) */}
-      <div className="border-t bg-white border-gray-3">
-        <div className="max-w-[1300px] mx-auto px-4 sm:px-7.5 xl:px-7">
-          <div className="flex items-center justify-between relative">
-            {/* ===== Desktop nav ===== */}
-            <div className="hidden xl:flex items-center justify-between">
+      {/* ===== BOTTOM BAR (slim) ===== */}
+      <div className="border-t border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(246,248,255,0.96)_100%)] backdrop-blur-md">
+        <div className="max-w-[710px] mx-auto px-4 sm:px-7.5 xl:px-7">
+          <div className="relative flex items-center justify-between h-[44px]">
+            {/* desktop nav */}
+            <div className="hidden xl:flex items-center">
               <nav>
-                <ul className="flex xl:items-center flex-col xl:flex-row gap-5 xl:gap-6">
+                <ul className="flex  items-center gap-5 leading-none">
                   {menuData.map((menuItem, i) =>
                     menuItem.submenu ? (
                       <Dropdown key={i} menuItem={menuItem} stickyMenu={stickyMenu} />
                     ) : (
-                      <li
-                        key={i}
-                        className="group relative before:w-0 before:h-[3px] before:bg-blue before:absolute before:left-0 before:top-0 before:rounded-b-[3px] before:ease-out before:duration-200 hover:before:w-full"
-                      >
+                      <li key={i} className="group relative">
                         <Link
                           href={menuItem.path}
-                          className={`hover:text-blue text-custom-sm font-medium text-dark flex ${
-                            stickyMenu ? "xl:py-4" : "xl:py-6"
-                          }`}
+                          className="px-1 text-[15px] font-medium text-dark/90 hover:text-blue py-0 leading-none"
                         >
                           {menuItem.title}
                         </Link>
+                        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[6px] h-[2px] w-0 bg-blue/90 transition-all duration-300 group-hover:w-3/4 rounded-full" />
                       </li>
                     )
                   )}
@@ -302,18 +385,15 @@ useEffect(() => {
               </nav>
             </div>
 
-            {/* ===== Mobile drawer (overlay + panel) ===== */}
+            {/* mobile drawer */}
             <div className={`xl:hidden fixed inset-0 z-[99998] ${navigationOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
               {/* backdrop */}
               <div
-                className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
-                  navigationOpen ? "opacity-100" : "opacity-0"
-                }`}
+                className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${navigationOpen ? "opacity-100" : "opacity-0"}`}
                 onClick={() => setNavigationOpen(false)}
                 aria-hidden="true"
               />
-
-              {/* panel — made NARROWER & *no* social icons inside */}
+              {/* panel */}
               <aside
                 className={`absolute right-0 top-0 h-full w-[60%] max-w-[320px] bg-white shadow-2 transition-transform duration-300 ${
                   navigationOpen ? "translate-x-0" : "translate-x-full"
@@ -349,36 +429,31 @@ useEffect(() => {
                     <path
                       fillRule="evenodd"
                       clipRule="evenodd"
-                      d="M13.4861 5.32955C13.5999 4.93128 14.015 4.70066 14.4133 4.81445L14.2072 5.53559C14.8262 4.97607 16.4275 5.98806 17.2124 6.77303C18.913 8.96016 19.0094 9.15923 19.1416 9.48199C19.2848 9.97047 19.0542 10.3856 18.6559 10.4994C18.261 10.6122 17.8496 10.3864 17.7317 9.99438C17.2544 9.10289 16.8517 8.53364 16.1518 7.83369C15.4518 7.13374 14.8826 6.73103 14.5058 6.50806C14.0465 6.27383 13.599 6.13589 13.4861 5.32955Z"
+                      d="M13.4861 5.32955C13.5999 4.93128 14.015 4.70066 14.4133 4.81445L14.2072 5.53559C14.8262 4.97607 16.4275 5.98806 17.2124 6.77303C18.913 8.96016 19.0094 9.15923 19.1416 9.48199C19.2848 9.97047 19.0542 10.3856 18.6559 10.4994C18.261 10.6122 17.8496 10.3864 17.7317 9.99438C17.2544 9.10289 16.8517 8.53364 16.1518 7.83369C15.4518 7.13374 14.8826 6.73103 14.5058 6.50806C14.3172 6.39645 14.176 6.32935 14.0897 6.29235C14.0465 6.27383 14.0169 6.2628 14.0019 6.25747L13.9911 6.25377C13.599 6.13589 13.3733 5.72445 13.4861 5.32955Z"
                       fill="#111827"
                     />
                   </svg>
 
                   <div>
-                    <span className="block text-2xs text-dark-4 uppercase">24/7 SUPPORT</span>
+                    <span className="block text-2xs uppercase text-dark/70">24/7 SUPPORT</span>
                     <p className="font-medium text-custom-sm text-dark">(+971) 526991213</p>
                   </div>
                 </div>
 
                 {/* menu items */}
-                <nav className="px-5 py-4"
-                onClickCapture={(e) => {
-    const a = (e.target as HTMLElement).closest("a[href]") as HTMLAnchorElement | null;
-    if (!a) return;
-
-    const href = a.getAttribute("href") || "";
-    const keep = a.getAttribute("data-keep-drawer") === "true";
-    const isHash = href === "#" || href.startsWith("#");
-    const isButtonish = a.getAttribute("role") === "button" || a.hasAttribute("aria-expanded");
-
-    // Do NOT close when tapping dropdown toggles (Pages/Blogs)
-    if (keep || isHash || isButtonish) return;
-
-    // Close for real navigation
-    setNavigationOpen(false);
-  }}
-                  >
-                  
+                <nav
+                  className="px-5 py-4"
+                  onClickCapture={(e) => {
+                    const a = (e.target as HTMLElement).closest("a[href]") as HTMLAnchorElement | null;
+                    if (!a) return;
+                    const href = a.getAttribute("href") || "";
+                    const keep = a.getAttribute("data-keep-drawer") === "true";
+                    const isHash = href === "#" || href.startsWith("#");
+                    const isButtonish = a.getAttribute("role") === "button" || a.hasAttribute("aria-expanded");
+                    if (keep || isHash || isButtonish) return;
+                    setNavigationOpen(false);
+                  }}
+                >
                   <ul className="flex flex-col gap-6">
                     {menuData.map((menuItem, i) =>
                       menuItem.submenu ? (
@@ -402,8 +477,8 @@ useEffect(() => {
 
             {/* right side (desktop “Recently Viewed / Wishlist”) */}
             <div className="hidden xl:block">
-              <ul className="flex items-center gap-5.5">
-                <li className="py-4">
+              <ul className="flex items-center gap-5.5 leading-none">
+                <li className="py-0">
                   <a href="#" className="flex items-center gap-1.5 font-medium text-custom-sm text-dark hover:text-blue">
                     <svg className="fill-current" width="16" height="16" viewBox="0 0 16 16">
                       <path d="M2.45313 7.55556H1.70313V7.55556L2.45313 7.55556ZM2.45313 8.66667L1.92488 9.19908C2.21729 9.4892 2.68896 9.4892 2.98137 9.19908L2.45313 8.66667Z" />
@@ -411,7 +486,7 @@ useEffect(() => {
                     Recently Viewed
                   </a>
                 </li>
-                <li className="py-4">
+                <li className="py-0">
                   <Link href="/wishlist" className="flex items-center gap-1.5 font-medium text-custom-sm text-dark hover:text-blue">
                     <svg className="fill-current" width="16" height="16" viewBox="0 0 16 16">
                       <path d="M5.97441 12.6073L6.43872 12.0183L5.97441 12.6073Z" />
@@ -422,6 +497,14 @@ useEffect(() => {
               </ul>
             </div>
           </div>
+        </div>
+
+        {/* —— premium: thin scroll progress indicator under the nav —— */}
+        <div className="h-[2px] w-full bg-transparent">
+          <div
+            className="h-[2px] bg-gradient-to-r from-blue-500 via-sky-400 to-purple-500 transition-[width] duration-150"
+            style={{ width: `${scrollPct}%` }}
+          />
         </div>
       </div>
     </header>

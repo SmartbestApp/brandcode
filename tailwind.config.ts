@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-
 const defaultTheme = require("tailwindcss/defaultTheme");
 
 const config: Config = {
@@ -11,20 +10,33 @@ const config: Config = {
   darkMode: "class",
   theme: {
     fontFamily: {
+      // Apple-like font stack w/ San Francisco fallbacks
+      sans: [
+        "SF Pro Text",
+        "SF Pro Display",
+        "Inter",
+        "system-ui",
+        "-apple-system",
+        "Segoe UI",
+        "Roboto",
+        "Helvetica Neue",
+        "Arial",
+        "Noto Sans",
+        "Apple Color Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Symbol",
+        ...defaultTheme.fontFamily.sans,
+      ],
       "euclid-circular-a": ["Euclid Circular A"],
     },
     container: {
       center: true,
-      padding: {
-        DEFAULT: "1rem",
-        sm: "2rem",
-        xl: "0",
-      },
+      padding: { DEFAULT: "1rem", sm: "2rem", xl: "0" },
     },
     colors: {
       current: "currentColor",
       transparent: "transparent",
-       black: "#000000",
+      black: "#000000",
       white: "#FFFFFF",
       body: "#6C6F93",
       meta: {
@@ -89,13 +101,14 @@ const config: Config = {
         "light-2": "#FEF3C7",
         "light-4": "#FFFBEB",
       },
-      teal: {
-        DEFAULT: "#02AAA4",
-        dark: "#06A09B",
-      },
-      orange: {
-        DEFAULT: "#F27430",
-        dark: "#E1580E",
+      teal: { DEFAULT: "#02AAA4", dark: "#06A09B" },
+      orange: { DEFAULT: "#F27430", dark: "#E1580E" },
+
+      /* Subtle fluorescent accents (optional) */
+      neon: {
+        lime: "#C8FF00",
+        yellow: "#F5FF4D",
+        mint: "#9AFFD0",
       },
     },
     screens: {
@@ -124,7 +137,7 @@ const config: Config = {
         "custom-3": ["35px", "45px"],
       },
       spacing: {
-        4.5: "1.125rem",
+        4.5: "1.125rem", /* your project already uses this */
         5.5: "1.375rem",
         6.5: "1.625rem",
         7.5: "1.875rem",
@@ -218,18 +231,15 @@ const config: Config = {
         203: "50.75rem",
         230: "57.5rem",
       },
-      maxWidth: {
-        30: "7.5rem",
-        40: "10rem",
-        50: "12.5rem",
-      },
+      maxWidth: { 30: "7.5rem", 40: "10rem", 50: "12.5rem" },
       zIndex: {
         999999: "999999",
         99999: "99999",
         9999: "9999",
         999: "999",
         99: "99",
-        1: "1",
+        1: "1",    // enable z-1
+        "-1": "-1" // enable -z-1
       },
       boxShadow: {
         1: "0px 1px 2px 0px rgba(166, 175, 195, 0.25)",
@@ -248,4 +258,5 @@ const config: Config = {
   },
   plugins: [],
 };
+
 export default config;
