@@ -82,13 +82,9 @@ const Header = () => {
   const [catOpen, setCatOpen] = useState(false);
   const options = [
     { label: "All Categories", value: "0" },
-    { label: "Desktop", value: "1" },
-    { label: "Laptop", value: "2" },
-    { label: "Monitor", value: "3" },
-    { label: "Phone", value: "4" },
-    { label: "Watch", value: "5" },
-    { label: "Mouse", value: "6" },
-    { label: "Tablet", value: "7" },
+    { label: "Smartwatches", value: "1" },
+    { label: "Powerbanks", value: "2" },
+    
   ];
   const [selectedCat, setSelectedCat] = useState(options[0]);
   const catRef = useRef<HTMLDivElement | null>(null);
@@ -360,7 +356,7 @@ const Header = () => {
 
       {/* ===== BOTTOM BAR (slim) ===== */}
       <div className="border-t border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(246,248,255,0.96)_100%)] backdrop-blur-md">
-        <div className="max-w-[710px] mx-auto px-4 sm:px-7.5 xl:px-7">
+        <div className="max-w-[640px] mx-auto px-4 sm:px-7.5 xl:px-7">
           <div className="relative flex items-center justify-between h-[44px]">
             {/* desktop nav */}
             <div className="hidden xl:flex items-center">
@@ -475,27 +471,8 @@ const Header = () => {
               </aside>
             </div>
 
-            {/* right side (desktop “Recently Viewed / Wishlist”) */}
-            <div className="hidden xl:block">
-              <ul className="flex items-center gap-5.5 leading-none">
-                <li className="py-0">
-                  <a href="#" className="flex items-center gap-1.5 font-medium text-custom-sm text-dark hover:text-blue">
-                    <svg className="fill-current" width="16" height="16" viewBox="0 0 16 16">
-                      <path d="M2.45313 7.55556H1.70313V7.55556L2.45313 7.55556ZM2.45313 8.66667L1.92488 9.19908C2.21729 9.4892 2.68896 9.4892 2.98137 9.19908L2.45313 8.66667Z" />
-                    </svg>
-                    Recently Viewed
-                  </a>
-                </li>
-                <li className="py-0">
-                  <Link href="/wishlist" className="flex items-center gap-1.5 font-medium text-custom-sm text-dark hover:text-blue">
-                    <svg className="fill-current" width="16" height="16" viewBox="0 0 16 16">
-                      <path d="M5.97441 12.6073L6.43872 12.0183L5.97441 12.6073Z" />
-                    </svg>
-                    Wishlist
-                  </Link>
-                </li>
-              </ul>
-            </div>
+  
+          
           </div>
         </div>
 
