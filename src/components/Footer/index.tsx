@@ -32,7 +32,7 @@ const Footer = () => {
                     />
                   </svg>
                 </span>
-                685 Market Street,Las Vegas, LA 95820,United States.
+                Naif Road( Behind Zarooni Mosque) , Deira, Dubai, UAE
               </li>
 
               <li>
@@ -61,7 +61,7 @@ const Footer = () => {
                       fill="#3C50E0"
                     />
                   </svg>
-                  (+099) 532-786-9843
+                  (+971) 526991213
                 </a>
               </li>
 
@@ -81,7 +81,7 @@ const Footer = () => {
                       fill="#3C50E0"
                     />
                   </svg>
-                  support@example.com
+                  KAWINDUBAI@GMAIL.COM
                 </a>
               </li>
             </ul>
@@ -89,7 +89,7 @@ const Footer = () => {
             {/* <!-- Social Links start --> */}
             <div className="flex items-center gap-4 mt-7.5">
               <a
-                href="#"
+                href="https://www.facebook.com/profile.php?id=61578264922962&mibextid=wwXIfr&rdid=5xglX3y3LqoeJ02g&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F19tEGdWGWy%2F%3Fmibextid%3DwwXIfr#"
                 aria-label="Facebook Social Link"
                 className="flex ease-out duration-200 hover:text-blue"
               >
@@ -338,7 +338,7 @@ const Footer = () => {
         <div className="max-w-[1170px] mx-auto px-4 sm:px-8 xl:px-0">
           <div className="flex gap-5 flex-wrap items-center justify-between">
             <p className="text-dark font-medium">
-              &copy; {year}. All rights reserved by PimjoLabs.
+              &copy; {year}. All rights reserved by Brandcode Germany.
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
