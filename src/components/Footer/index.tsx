@@ -134,7 +134,7 @@ const Footer = () => {
               </a>
 
               <a
-                href="#"
+                href="https://www.instagram.com/brandcode_germany?igsh=amtqYm9pc295MnNm&utm_source=qr"
                 aria-label="Instagram Social Link"
                 className="flex ease-out duration-200 hover:text-blue"
               >
@@ -198,33 +198,23 @@ const Footer = () => {
 
           <div className="w-full sm:w-auto">
             <h2 className="mb-7.5 text-custom-1 font-medium text-dark">
-              Account
+              Products
             </h2>
 
             <ul className="flex flex-col gap-3.5">
               <li>
                 <a className="ease-out duration-200 hover:text-blue" href="#">
-                  My Account
+                  All Products
                 </a>
               </li>
               <li>
                 <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Login / Register
+                  Smartwatch
                 </a>
               </li>
               <li>
                 <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Cart
-                </a>
-              </li>
-              <li>
-                <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Wishlist
-                </a>
-              </li>
-              <li>
-                <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Shop
+                  Powerbank
                 </a>
               </li>
             </ul>
@@ -232,33 +222,28 @@ const Footer = () => {
 
           <div className="w-full sm:w-auto">
             <h2 className="mb-7.5 text-custom-1 font-medium text-dark">
-              Quick Link
+              Company
             </h2>
 
             <ul className="flex flex-col gap-3">
               <li>
                 <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Privacy Policy
+                  About us
                 </a>
               </li>
               <li>
                 <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Refund Policy
+                  Contact us
                 </a>
               </li>
               <li>
                 <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Terms of Use
+                  Careers
                 </a>
               </li>
               <li>
                 <a className="ease-out duration-200 hover:text-blue" href="#">
                   FAQ’s
-                </a>
-              </li>
-              <li>
-                <a className="ease-out duration-200 hover:text-blue" href="#">
-                  Contact
                 </a>
               </li>
             </ul>
